@@ -1,51 +1,32 @@
+const path = require('path');
 const express = require('express');
-const port = 5000;
+const cors = require('cors');
+require('dotenv').config();
+const port = process.env.PORT || 5000;
+const connectDB = require('./config/db');
+
+connectDB();
 
 const app = express();
 
-let ideas = [
-    {
-        id:1,
-        text: 'Ovo je prva ideja',
-        tag: 'Tech',
-        username: 'El Presidente',
-        date: '2023-10-22'
-    },
-    {
-        id:2,
-        text: 'Ovo je druga ideja',
-        tag: 'Stonks',
-        username: 'Mitch Connor',
-        date: '2022-09-15'
-    },
-    {
-        id:3,
-        text: 'Ovo je treca ideja',
-        tag: 'Politics',
-        username: 'Eric Cartman',
-        date: '2022-09-11'
-    }
-];
+//Static folder
+app.use(express.static(path.join(__dirname, 'public')));
+
+//Body parser middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+//Cors middleware
+app.use(cors({
+    origin: ['http://localhost:5000', 'http://localhost:3000'],
+    credentials: true
+}))
 
 app.get('/', (request, response) => {
     response.json({ message: 'Welcome to the RandomIdeasAPI'});
 });
 
-//get all ideas
-app.get('/api/ideas', (request, response) => {
-    response.json({ success: true, data: ideas});
-});
-
-app.get('/api/ideas/:id', (request, response) => {
-    const idea = ideas.find((idea) => idea.id === +request.params.id);
-
-    if(!idea) {
-       return response
-       .status(404)
-       .json({ success: false, error: 'Resource not found'});
-    }
-
-    response.json({ success: true, data: request.params.id});
-});
+const ideasRouter = require('./routes/ideas');
+app.use('/api/ideas', ideasRouter);
 
 app.listen(port, () => console.log(`Server listening on port ${port}`));
